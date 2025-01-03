@@ -6,6 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	usecase "onion/internal/usecase/interfaces"
+	"text/template"
+	"time"
+)
+
+const (
+	indexFilePath = "internal/presentation/template/index.html"
 )
 
 func New(port int, logger usecase.Logger) *Router {
@@ -30,6 +36,31 @@ func (r *Router) Run() error {
 		return err
 	}
 	return nil
+}
+
+func (r *Router) AddTopHandler() {
+	const path = "GET /"
+	r.mux.HandleFunc(path, func(w http.ResponseWriter, req *http.Request) {
+		data := struct {
+			Title  string
+			Header string
+			Time   time.Time
+		}{
+			Title:  "Golang HTML Example",
+			Header: "My Website Header",
+			Time:   time.Now(),
+		}
+		t := template.New("index.html")
+		t, err := t.ParseFiles(indexFilePath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if err := t.ExecuteTemplate(w, "index.html", data); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
 }
 
 func (r *Router) AddFetchArticlesHandler(uc usecase.FetchArticlesUsecase) {

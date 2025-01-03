@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{.Title}}</title>
+    </head>
+    <body>
+        <header>
+            <h1>{{.Header}}</h1>
+        </header>
+        <main>
+            <p>現在時刻: {{.Time.Format "2006/1/2 15:04:05"}}</p>
+            <form action="/articles" method="GET">
+                <label for="query">Search:</label>
+                <input type="text" id="query" name="query"
+                    placeholder="Enter a keyword">
+                <button type="submit">Search</button>
+            </form>
+        </main>
+        <footer>
+            <p>© 2025 Ryota Onuma</p>
+        </footer>
+    </body>
+</html>
