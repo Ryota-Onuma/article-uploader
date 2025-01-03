@@ -3,6 +3,7 @@ package articles
 import (
 	"context"
 	"onion/internal/domain/model"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -37,5 +38,7 @@ func (a *CreateArticleServiceImpl) Run(ctx context.Context, title, body string) 
 		return nil, err
 	}
 
-	return model.NewArticle(id, articleTitle, articleBody)
+	createdAt := time.Now()
+
+	return model.NewArticle(id, articleTitle, articleBody, createdAt)
 }

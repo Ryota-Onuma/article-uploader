@@ -34,7 +34,9 @@ func main() {
 	rt.AddCreateArticleHandler(
 		usecasearticles.NewCreateArticleUsecase(baseUsecase, articles.NewCreateArticleService(), repository.NewArticleRepository()),
 	)
-	rt.AddTopHandler()
+	rt.AddTopHandler(
+		usecasearticles.NewFetchArticlesUsecase(baseUsecase, repository.NewArticleRepository()),
+	)
 
 	// サーバーを起動する
 	if err := rt.Run(); err != nil {

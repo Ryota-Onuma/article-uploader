@@ -2,21 +2,24 @@ package model
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 type Article struct {
-	ID    ArticleID
-	Title ArticleTitle
-	Body  ArticleBody
+	ID        ArticleID
+	Title     ArticleTitle
+	Body      ArticleBody
+	CreatedAt time.Time
 }
 
-func NewArticle(id ArticleID, title ArticleTitle, body ArticleBody) (*Article, error) {
+func NewArticle(id ArticleID, title ArticleTitle, body ArticleBody, createdAt time.Time) (*Article, error) {
 	return &Article{
-		ID:    id,
-		Title: title,
-		Body:  body,
+		ID:        id,
+		Title:     title,
+		Body:      body,
+		CreatedAt: createdAt,
 	}, nil
 }
 

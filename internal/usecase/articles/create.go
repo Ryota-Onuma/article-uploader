@@ -2,10 +2,12 @@ package articles
 
 import (
 	"context"
+	"fmt"
 	"onion/internal/domain/model"
 	"onion/internal/domain/repository"
 	"onion/internal/domain/service/articles"
 	i "onion/internal/usecase/interfaces"
+	"time"
 )
 
 var _ i.CreateArticleUsecase = (*CreateArticleUsecaseImpl)(nil)
@@ -25,7 +27,9 @@ func NewCreateArticleUsecase(base i.BaseUsecase, createArticle articles.CreateAr
 }
 
 func (a *CreateArticleUsecaseImpl) Run(ctx context.Context, title, body string) (model.Article, error) {
-	article, err := a.createArticle.Run(ctx, title, body)
+	// 今日の日付をPrefixにしてタイトルを生成する
+	titleWithTimePrefix := fmt.Sprintf("【%s】 %s", time.Now().Format("2006-01-02"), title)
+	article, err := a.createArticle.Run(ctx, titleWithTimePrefix, body)
 	if err != nil {
 		return model.Article{}, a.WrapForbiddenError(ctx, err)
 	}

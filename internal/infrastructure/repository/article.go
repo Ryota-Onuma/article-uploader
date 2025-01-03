@@ -7,14 +7,16 @@ import (
 	"onion/internal/domain/repository"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 const dataPath = "testdata/articles"
 
 type Article struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-	Body  string `json:"body"`
+	ID        string `json:"id"`
+	Title     string `json:"title"`
+	Body      string `json:"body"`
+	CreatedAt string `json:"created_at"`
 }
 
 var _ repository.ArticleRepository = (*ArticleRepository)(nil)
@@ -51,7 +53,7 @@ func (a *ArticleRepository) CreateArticle(article model.Article) error {
 		return err
 	}
 	defer file.Close()
-	data, err := json.Marshal(&Article{ID: article.ID.Value(), Title: article.Title.Value(), Body: article.Body.Value()})
+	data, err := json.Marshal(&Article{ID: article.ID.Value(), Title: article.Title.Value(), Body: article.Body.Value(), CreatedAt: article.CreatedAt.Format(time.RFC3339)})
 	if err != nil {
 		return err
 	}
@@ -112,5 +114,10 @@ func (a *Article) ToDomainModel() (*model.Article, error) {
 		return nil, err
 	}
 
-	return model.NewArticle(id, title, body)
+	createdAt, err := time.Parse(time.RFC3339, a.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return model.NewArticle(id, title, body, createdAt)
 }

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	usecase "onion/internal/usecase/interfaces"
+	"sort"
 	"text/template"
-	"time"
 )
 
 const (
@@ -38,24 +38,38 @@ func (r *Router) Run() error {
 	return nil
 }
 
-func (r *Router) AddTopHandler() {
+func (r *Router) AddTopHandler(uc usecase.FetchArticlesUsecase) {
 	const path = "GET /"
 	r.mux.HandleFunc(path, func(w http.ResponseWriter, req *http.Request) {
-		data := struct {
-			Title  string
-			Header string
-			Time   time.Time
-		}{
-			Title:  "Golang HTML Example",
-			Header: "My Website Header",
-			Time:   time.Now(),
+		articles, err := uc.Run(req.Context())
+		if err != nil {
+			r.logger.Error(req.Context(), "Failed to fetch articles", fmt.Sprintf("%+v", err))
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
 		}
+		// createdAtの降順にソート
+		sort.Slice(articles, func(i, j int) bool {
+			return articles[i].CreatedAt.After(articles[j].CreatedAt)
+		})
+
+		articlesData := make([]Article, 0, len(articles))
+		for _, article := range articles {
+			articlesData = append(articlesData, convertArticleDomainModelToArticleDataModel(article))
+		}
+
+		data := struct {
+			Articles []Article
+		}{
+			Articles: articlesData,
+		}
+
 		t := template.New("index.html")
-		t, err := t.ParseFiles(indexFilePath)
+		t, err = t.ParseFiles(indexFilePath)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		if err := t.ExecuteTemplate(w, "index.html", data); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -94,23 +108,14 @@ func (r *Router) AddFetchArticlesHandler(uc usecase.FetchArticlesUsecase) {
 func (r *Router) AddCreateArticleHandler(uc usecase.CreateArticleUsecase) {
 	const path = "POST /article"
 	r.mux.HandleFunc(path, func(w http.ResponseWriter, req *http.Request) {
-		article, err := uc.Run(req.Context(), req.FormValue("title"), req.FormValue("body"))
+		_, err := uc.Run(req.Context(), req.FormValue("title"), req.FormValue("body"))
 		if err != nil {
 			r.logger.Error(req.Context(), "Failed to create article", fmt.Sprintf("%+v", err))
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		articleData := convertArticleDomainModelToArticleDataModel(article)
-		data, err := json.Marshal(articleData)
-		if err != nil {
-			r.logger.Error(req.Context(), "Failed to marshal article", fmt.Sprintf("%+v", err))
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(data)
+		http.Redirect(w, req, "/", http.StatusMovedPermanently)
 	})
 	r.logger.Info(context.Background(), fmt.Sprintf("Added handler for %s", path))
 }
